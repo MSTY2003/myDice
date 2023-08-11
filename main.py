@@ -17,8 +17,16 @@ bot = Bot(token=config['token'])
 #角色卡dict
 playerDict = playerInfo.readInfo()
 
+#用户绑定角色dict
+userPc = {}
+
 #检定函数模式
 checkmode = 1
+
+
+def updatePlayerInfo(dict):
+    playerInfo.input(dict)
+
 
 #切换检定函数模式
 @bot.command(name="setmode")
@@ -58,15 +66,15 @@ async def main(msg:Message,chat:str = ''):
         input = msg.content
         player = msg.author_id
         inputSplit = split.strSplit(input)
-        dIndex = inputSplit.index('d')
-        print("[0]="+inputSplit[0])
-        #/r
-        if(inputSplit[dIndex-1]=='/r'):
-            num = int(inputSplit[dIndex+1])
-            ValueR = random.randint(1,num)
-            await msg.reply("掷出了D"+str(num)+"="+ValueR)
+        try:
+            dIndex = inputSplit.index('d')
+        except:
+            #/r
+            if(inputSplit[1]=='r'):
+                ValueR = random.randint(1,100)
+                await msg.reply("掷出了D100"+"="+str(ValueR))
         #/r d    
-        elif(inputSplit[dIndex-1].isdigit()):
+        if(inputSplit[dIndex-1].isdigit()):
             sum = 0
             listR = []
             for i in range(int(inputSplit[dIndex-1])):
@@ -96,6 +104,56 @@ async def main(msg:Message,chat:str):
         print(e)
         await msg.reply("格式有误,检查输入格式")
 
+#pc命令：角色卡相关内容
+@bot.command(name="pc")
+async def main(msg:Message,command1:str,command2:str=''):
+    try:
+        player = msg.author_id
+        playerDict = playerInfo.readInfo()
+
+        #用户第一次使用时创建数据
+        if player not in playerDict:
+            print("第一次")
+            tempDict = {}
+            tempDict[player] = {}
+            playerInfo.input(tempDict)
+
+        #new
+        if(command1 == "new"):
+            if(command2 == ''):
+                msg.reply("角色名不能为空！")
+            else:
+                pc = {}
+                pc[command2]={}
+                playerInfo.inputPlayerInfo(player,pc)
+                await msg.reply("创建角色：“"+command2+"”成功!")
+        elif(command1 == "tag"):
+            if command2 in playerDict[player]:
+                userPc[player]=command2
+                await msg.reply("绑定角色“"+command2+"”成功!")
+            else:
+                await msg.reply("绑定角色失败,角色不存在!")
+        elif(command1 == "list"):
+            tempStr = "角色列表：\n"
+            for key in playerDict[player].keys():
+                tempStr += key
+                try:
+                    if(key == userPc[player]):
+                        tempStr +="[当前角色]"
+                except:
+                    tempStr +="[未绑定]"
+                    print("list命令出错")
+                tempStr += " "
+            await msg.reply(tempStr)
+            print(key)
+            
+            
+
+    except Exception as e:
+        print(e)
+        await msg.reply("操作失败!")
+
+#st命令：录入属性
 @bot.command(name="st")
 async def main(msg:Message,chat:str):
     #每次录卡更新预读取字典
@@ -106,24 +164,24 @@ async def main(msg:Message,chat:str):
         #查询功能
         if(chat == "info"):
             replyChat = ''
-            for key,value in playerDict[player].items():
+            for key,value in playerDict[player][userPc].items():
                 replyChat += key + ":" + value + "\n"
             await msg.reply(replyChat)
         #录卡
         else:
+            #读入属性
             tempList = split.strSplit(input)
-            tempDict ={}
+            stDict ={}
+            #内容不成对则格式错误
             if(len(tempList)%2!=0):
                 raise Exception
             else:
                 for i in range(2, len(tempList), 2):
-                    tempDict[tempList[i]] = tempList[i+1]
-                nameDict = {}
-                nameDict[player] = tempDict
-                print(tempList)
-                print(tempDict)
-                print(nameDict)
-                playerInfo.input(nameDict)
+                    stDict[tempList[i]] = tempList[i+1]
+                playerDict[player][userPc] = stDict
+                print(stDict)
+                print(playerDict)
+                playerInfo.input(playerDict)
 
     except Exception as e:
         print(e)

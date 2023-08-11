@@ -15,8 +15,27 @@ def input(dict1):
             print("文件写入完成")
     else:
         raise Exception
-    
+
+def inputPlayerInfo(userId,playerDict):
+    with open("playerinfo.json","r") as f:
+        content = json.load(f)
+    content[userId].update(playerDict)
+    with open("playerinfo.json",'w') as f1:
+            json.dump(content,f1,ensure_ascii=False)
+            print("角色数据写入完成")
+
 def readInfo():
      with open("playerinfo.json","r") as f:
             content = json.load(f)
             return content
+     
+def readPc():
+    try:
+        with open("playerinfo.json","r") as f:
+            content = json.load(f)
+            tempList = []
+            for key in content.key:
+                tempList.append(key)
+            return tempList
+    except Exception as e:
+        print(e)
