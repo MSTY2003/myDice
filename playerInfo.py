@@ -39,3 +39,15 @@ def readPc():
             return tempList
     except Exception as e:
         print(e)
+
+def getStDict(playerDict,player,userPc,chatList):
+    stDict = {}
+    for i in range(2,len(chatList),2):
+        stDict[chatList[i]] = chatList[i+1]
+        #chatList[i]为属性键，chatList[i+1]为属性值
+    playerDict[player][userPc] = stDict
+    #用户id:player,角色:userPc
+    #用户数据构成为{用户id:{角色:{属性:属性值}}}
+    
+    
+     

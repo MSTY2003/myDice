@@ -30,21 +30,21 @@ def updatePlayerInfo(dict):
 
 #切换检定函数模式
 @bot.command(name="setmode")
-async def main(msg:Message,num:str):
+async def main(msg: Message, num: str):
     try:
         chat = int(num)
-        if(chat == 1 or chat == 2):
-            checkmode = chat
-            str1 = ''
-            if(chat == 1):
-                str1 = "已切换房规至：模式"+str(chat)+"\n1~5为大成功，96~100为大失败"
-            else:
-                str1 = "已切换房规至：模式"+str(chat)+"\n1为大成功，100为大失败"
-            await msg.reply(str1)
+        str1 = ''
+
+        if chat == 1:
+            str1 = "已切换房规至：模式1\n1~5为大成功，96~100为大失败"
+        elif chat == 2:
+            str1 = "已切换房规至：模式2\n1为大成功，100为大失败"
         else:
-            raise Exception
-    except:
-        await msg.reply("输入格式有误，仅可输入1或2切换房规")
+            raise Exception("输入格式有误，仅可输入1或2切换房规")
+        checkmode = chat
+        await msg.reply(str1)
+    except Exception as e:
+        await msg.reply(str(e))
 
 @bot.command(name="getmode")
 async def main(msg:Message):
@@ -59,35 +59,41 @@ async def main(msg:Message):
         await msg.reply("格式有误,检查输入格式")
         print(e)
 
-#/r 命令
 @bot.command(name="r")
-async def main(msg:Message,chat:str = ''):
+async def main(msg: Message, chat: str = ''):
     try:
-        input = msg.content
+        input_text = msg.content
         player = msg.author_id
-        inputSplit = split.strSplit(input)
-        try:
-            dIndex = inputSplit.index('d')
-        except:
-            #/r
-            if(inputSplit[1]=='r'):
-                ValueR = random.randint(1,100)
-                await msg.reply("掷出了D100"+"="+str(ValueR))
-        #/r d    
-        if(inputSplit[dIndex-1].isdigit()):
-            sum = 0
-            listR = []
-            for i in range(int(inputSplit[dIndex-1])):
-                num = int(inputSplit[dIndex+1])
-                ValueR = random.randint(1,num)
-                listR.append(str(ValueR))
-            for i in listR:
-                sum += int(i)
-            str1 = ','.join(listR)
-            await msg.reply("掷出了3个D"+str(num)+"="+str(sum)+"("+str1+")")
+        input_split = split.strSplit(input_text)
+        print(input_split)
+
+        if len(input_split) == 2 and input_split[0] == '/' and input_split[1] == 'r' and 'd' not in input_split:
+            print("s1")
+            num_rolls = 1
+            die_sides = 100
+        elif len(input_split) == 4 and input_split[0] == '/' and input_split[1] == 'r' and input_split[2] == 'd':
+            print("s2")
+            num_rolls = 1
+            die_sides = int(input_split[3])
+        elif 'd' in input_split:
+            print("s3")
+            d_index = input_split.index('d')
+
+            if input_split[d_index - 1].isdigit():
+                print("p1")
+                num_rolls = int(input_split[d_index - 1])
+                die_sides = int(input_split[d_index + 1])
+            else:
+                raise ValueError("格式有误，请检查输入格式1")
+        else:
+            raise ValueError("格式有误，请检查输入格式2")
+
+        rolls = [random.randint(1, die_sides) for _ in range(num_rolls)]
+        roll_str = ','.join(map(str, rolls))
+        total_sum = sum(rolls)
+        await msg.reply(f"掷出了{num_rolls}个D{die_sides}={total_sum}({roll_str})")
     except Exception as e:
-        await msg.reply("格式有误,检查输入格式")
-        print(e)
+        await msg.reply(str(e))
 
 @bot.command(name="ra")
 async def main(msg:Message,chat:str):
@@ -171,17 +177,16 @@ async def main(msg:Message,chat:str):
         else:
             #读入属性
             tempList = split.strSplit(input)
-            stDict ={}
+            print(tempList)
             #内容不成对则格式错误
             if(len(tempList)%2!=0):
                 raise Exception
             else:
-                for i in range(2, len(tempList), 2):
-                    stDict[tempList[i]] = tempList[i+1]
-                playerDict[player][userPc] = stDict
-                print(stDict)
-                print(playerDict)
+                pc = userPc[player]
+                print(playerDict,player,userPc)
+                playerInfo.getStDict(playerDict,player,pc,tempList)
                 playerInfo.input(playerDict)
+                await msg.reply("属性写入成功!")
 
     except Exception as e:
         print(e)
